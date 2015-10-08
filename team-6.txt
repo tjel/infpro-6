@@ -1,1 +1,7 @@
+<<<<<<< HEAD
 Jakub Kucharski
+=======
+
+Jolanta Obara
+Natkaniec Michal
+>>>>>>> b8efae6a1de537e436a475b00240bd5d9987f323
