@@ -8,7 +8,7 @@ int main( )
     double rad; 
     
     do {
-    cout<<"Enter the radius:\n"; 
+    cout<<"Enter the radius: "; 
     cin>>rad;
     } while (rad<=0);
     
