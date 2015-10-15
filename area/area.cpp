@@ -1,10 +1,10 @@
 # include <iostream>
+#include <math.h>
 
 using namespace std;
 
 int main( ) 
 { 
-    float PI = 3.1415926;                // variables can be initialized during declaration 
     double rad; 
     
     do {
@@ -12,7 +12,7 @@ int main( )
     cin>>rad;
     } while (rad<=0);
     
-    cout<<"Area of the circle is "<<PI*rad*rad<<endl;
+    cout<<"Area of the circle is "<<M_PI*rad*rad<<endl;
 
     return 0;
 }  
