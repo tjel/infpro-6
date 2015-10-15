@@ -10,7 +10,7 @@ int main( )
     do {
     cout<<"Enter the radius:\n"; 
     cin>>rad;
-    while (rad<=0);
+    } while (rad<=0);
     
     cout<<"Area of the circle is "<<PI*rad*rad<<endl;
 
