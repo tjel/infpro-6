@@ -17,5 +17,5 @@ git --version
 
 //
 
-credentails
+credentials
 git config --global credential.helper "cache --timeout=5400"
