@@ -1,0 +1,63 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Net;
+using System.Net.Sockets;
+using System.Diagnostics;
+
+namespace aoe
+{
+    class Program
+    {
+        static int SendMessage(Socket sck, String msg)
+        {
+            Byte[] buffer = new Byte[255];
+            buffer = Encoding.UTF8.GetBytes(msg);
+            return sck.Send(buffer, 0, buffer.Length, 0);
+        }
+        static String GetMessage(Socket sck)
+        {
+            Byte[] buffer = new Byte[64];
+            int rec;
+            StringBuilder Message = new StringBuilder();
+            for (; buffer[0] != 13; )
+            {
+                buffer = new Byte[64];
+                rec = sck.Receive(buffer, 0, buffer.Length, 0);
+                Message.Append(Encoding.UTF8.GetString(buffer, 0, rec));
+            }
+            return Message.ToString();
+        }
+        static void Main(String[] args)
+        {
+            IPAddress HOST = IPAddress.Parse(/*"127.0.0.1"*/"192.168.0.15");
+            IPEndPoint serverEP = new IPEndPoint(HOST, 1337);
+            Socket sck = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            sck.Bind(serverEP);
+            sck.Listen(1337);
+
+            try
+            {
+                Console.WriteLine("aoe");
+                Socket msg = sck.Accept();
+
+                for (; ; )
+                {
+                    //Byte[] buffer;
+                    //buffer = new byte[255];
+                    //SendMessage(msg, "おはよう、世界！");
+                    SendMessage(msg, "\x1b[31m");
+                    SendMessage(msg, "Masz, babo, placek.\xD\xA");
+                    //Console.WriteLine(GetMessage(msg));
+                }
+                sck.Close(); //i tak nie wlezie
+                msg.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+    }
+}
