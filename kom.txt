@@ -1,0 +1,201 @@
+class QTcpServer;
+class QTcpSocket;
+ 
+class Widget : public QWidget
+{
+	Q_OBJECT
+ 
+public:
+	Widget(QWidget *parent = 0);
+	~Widget();
+ 
+private slots:
+	void serverStart();
+	void serverStop();
+	void serverQuit();
+	void addClient();
+	void removeClient();
+	void sendForward();
+ 
+private:
+	QTcpServer *tcpServer;
+ 
+	QLabel *portLabel;
+	QLabel *statusLabel;
+	QLineEdit *portLineEdit;
+	QPushButton *startServerButton;
+	QPushButton *stopServerButton;
+	QPushButton *quitServerButton;
+ 
+	QList<qtcpsocket *> *clientsList;
+	QList<quint16> *blockSizeList;
+};
+
+
+Widget::Widget(QWidget *parent) : QWidget(parent)
+{
+	tcpServer = new QTcpServer(this);
+	connect(tcpServer, SIGNAL(newConnection()), this, SLOT(addClient()));
+ 
+	portLineEdit = new QLineEdit(this);
+	portLineEdit->setValidator(new QIntValidator(1, 65535, this));
+ 
+	portLabel = new QLabel(tr("&Port:"), this);
+	portLabel->setBuddy(portLineEdit);
+ 
+}
+
+
+void Widget::serverStart()
+{
+	if (!tcpServer->listen(QHostAddress::Any, portLineEdit->text().toInt()))
+	{
+		QMessageBox::critical(this, tr("B³¹d!"),
+		   tr("Serwer nie mo¿e zostaæ poprawnie uruchomionym"));
+		return;
+	}
+	else
+	{
+		QString ipAddress;
+		QList<qhostaddress> ipAddressesList =
+		   QNetworkInterface::allAddresses();
+ 
+		for (int i = 0; i < ipAddressesList.size(); ++i)
+		{
+			if (ipAddressesList.at(i) != QHostAddress::LocalHost &&
+			   ipAddressesList.at(i).toIPv4Address())
+			{
+				ipAddress = ipAddressesList.at(i).toString();
+				break;
+			}
+		}
+ 
+		if (ipAddress.isEmpty())
+		{
+			ipAddress =
+			   QHostAddress(QHostAddress::LocalHost).toString();
+		}
+ 
+}
+
+void Widget::serverStop()
+{
+	tcpServer->close();
+	// ...
+}
+ 
+void Widget::addClient()
+{
+	QTcpSocket *client = tcpServer->nextPendingConnection();
+	clientsList->push_back(client);
+	blockSizeList->push_back(0);
+ 
+	connect(client, SIGNAL(disconnected()), this, SLOT(removeClient()));
+	connect(client, SIGNAL(disconnected()), client, SLOT(deleteLater()));
+	connect(client, SIGNAL(readyRead()), this, SLOT(sendForward()));
+}
+
+void Widget::sendForward()
+{
+	QTcpSocket *client = (QTcpSocket*) sender();
+	int index = clientsList->indexOf(client);
+ 
+	QDataStream in(client);
+	in.setVersion(QDataStream::Qt_4_6);
+ 
+	if (blockSizeList->at(index) == 0)
+	{
+		if (client->bytesAvailable() < (int)sizeof(quint16))
+		{
+			return;
+		}
+ 
+		quint16 sizeOfBlock;
+		in >> sizeOfBlock;
+		(*blockSizeList)[index] = sizeOfBlock;
+	}
+ 
+	if (client->bytesAvailable() < blockSizeList->at(index))
+	{
+		return;
+	}
+ 
+	QString nick;
+	in >> nick;
+ 
+	QString message;
+	in >> message;
+ 
+	QByteArray data;
+	QDataStream out(&data, QIODevice::WriteOnly);
+	out.setVersion(QDataStream::Qt_4_6);
+ 
+	out << blockSizeList->at(index);
+	out << nick;
+	out << message;
+ 
+	for (int i = 0; i < clientsList->size(); ++i)
+	{
+		if (i != index)
+		{
+			clientsList->at(i)->write(data);
+		}
+	}
+ 
+	(*blockSizeList)[index] = (quint16)0;
+}
+
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+{
+	// ...
+	connect(tcpSocket, SIGNAL(connected()), this, SLOT(connectedToServer()));
+	connect(tcpSocket, SIGNAL(error(QAbstractSocket::SocketError)), this,
+	   SLOT(displayError(QAbstractSocket::SocketError)));
+	// ...
+}
+
+void MainWindow::sendMessage()
+{
+	chat->append(nick + ": " + messageLine->text());
+ 
+	QByteArray data;
+	QDataStream out(&data, QIODevice::WriteOnly);
+ 
+	out.setVersion(QDataStream::Qt_4_6);
+	out << (quint16) 0;
+ 
+	out << nick;
+ 
+	out << messageLine->text();
+ 
+	out.device()->seek(0);
+ 
+	out << (quint16) (data.size() - sizeof(quint16));
+ 
+	tcpSocket->write(data);
+ 
+	messageLine->clear();
+}
+
+
+void MainWindow::disconnectFromServer()
+{
+	tcpSocket->close();
+	// ...
+}
+
+void MainWindow::displayError(QAbstractSocket::SocketError socketError)
+{
+	switch (socketError)
+	{
+ 
+	// ...
+ 
+	case QAbstractSocket::HostNotFoundError:
+		QMessageBox::information(this, tr("Fortune Client"),
+		   tr("The host was not found. Please check the "
+		   "host name and port settings."));
+		break;
+	// ...
+}
