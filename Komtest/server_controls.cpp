@@ -1,5 +1,5 @@
 
-#include "Server_Controls.h"
+#include "server_controls.h"
 
 Server_Controls::Server_Controls(QObject *parent) :
     QTcpServer(parent)
@@ -18,11 +18,11 @@ void Server_Controls::StartServer()
     }
 }
 
-void Server_Controls::incomingConnection(int Descriptior)
+void Server_Controls::incomingConnection(int Descriptor)
 {
-    qDebug() << Descriptior << " Connecting...";
+    qDebug() << Descriptor << " Connecting...";
 
-    Thread_Controls *thread = new Thread_Controls(Descriptior, this);
+    Thread_Controls *thread = new Thread_Controls(Descriptor, this);
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
     thread->start();
 }

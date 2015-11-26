@@ -10,9 +10,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     server_controls.cpp \
-    thread_controls.cpp
+    thread_controls.cpp \
+    header.cpp
 
 HEADERS += \
     server_controls.h \
-    thread_controls.h
+    thread_controls.h \
+    header.h
 

@@ -1,4 +1,4 @@
-#include <QCoreApplication>
+/*#include <QCoreApplication>
 #include <QTcpSocket>
 #include <QTcpServer>
 #include <cstring>
@@ -7,16 +7,16 @@
 
 int main(int argc, char *argv[])
 {
-    QTextStream cin(stdin);
+    QTextStream cin(stdin); */
 
-    QCoreApplication a(argc, argv);
+    /*QCoreApplication a(argc, argv);
 
     Server_Controls Server;
     Server.StartServer();
 
     QTcpSocket *socket;
     socket = new QTcpSocket();
-    socket->connectToHost("89.74.93.135", 1337);
+    socket->connectToHost("155.158.101.35", 1337);
     QString Qtext;
     socket->write("aaa");
     socket->write("aak");
@@ -37,17 +37,19 @@ int main(int argc, char *argv[])
        }
 
     return a.exec();
-}
+}*/
 
 
 
 
- /*   QCoreApplication a(argc, argv);
-    std::cout<<"asd";
+  /* QCoreApplication a(argc, argv);
     QTcpSocket *socket;
     socket = new QTcpSocket();
     QTcpServer *server;
     server = new QTcpServer();
+
+    spox_socket = new QTcpSocket(); // nowy sokiet lel
+
 
     if(!server->listen(QHostAddress::Any, 1337))
     {
@@ -58,15 +60,22 @@ int main(int argc, char *argv[])
         qDebug() << "Server started!";
     }
 
-    socket->connectToHost("89.74.93.135", 1337);
+    socket->connectToHost("155.158.101.35", 1337);
     if(socket->waitForConnected(3000))
        {
+           spox_socket = server->nextPendingConnection();
+
+           connect(spox_socket, SIGNAL(readyRead()),
+               this, SLOT(startRead()));
+
            qDebug() << "Connected!";
 
            // send
            socket->write("hello server\r\n\r\n\r\n\r\n");
-           socket->waitForBytesWritten(1000);
-           socket->waitForReadyRead(3000);
+
+
+           //socket->waitForBytesWritten(1000);
+           //socket->waitForReadyRead(3000);
            qDebug() << "Reading: " << socket->bytesAvailable();
 
            qDebug() << socket->readAll();
@@ -78,6 +87,22 @@ int main(int argc, char *argv[])
        {
            qDebug() << "Not connected!";
        }
-    return a.exec();*/
+    return a.exec();
+} */
 
 
+#include <QCoreApplication>
+#include "header.cpp"
+
+
+int main (int argc, char** argv)
+{
+    QCoreApplication app(argc, argv);
+
+  Server server;
+  Client client;
+
+  client.start("155.158.101.35", 8888);
+
+  return app.exec();
+}
