@@ -6,6 +6,9 @@
 #include <QString>
 #include <QTextStream>
 #include <QDateTime>
+#include <QTcpSocket>
+#include <QTcpServer>
+#include <QDebug>
 
 class Display : public QObject
 {
@@ -14,7 +17,18 @@ class Display : public QObject
     static const QString DATETIMEFORMAT;
 
 public slots:
-    void print(QString, QDateTime);
+    void server_start();
+    void print(QDateTime);
+    void newConnection();
+
+signals:
+    void newMessage(QDateTime);
+    void messageSent();
+
+private:
+    QTcpServer* server;
+    QTcpSocket* socket;
+
 };
 
 #endif // DISPLAY_H

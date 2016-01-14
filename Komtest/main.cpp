@@ -102,7 +102,7 @@ int main (int argc, char** argv)
   Server server;
   Client client;
 
-  client.start("155.158.101.35", 8888);
+  client.start("192.168.0.13", 8888);
 
   return app.exec();
 }

@@ -5,6 +5,9 @@
 #include <QString>
 #include <QTextStream>
 #include <QDateTime>
+#include <QTcpSocket>
+#include <QTcpServer>
+#include <QDebug>
 
 class Prompt : public QObject
 {
@@ -13,11 +16,16 @@ class Prompt : public QObject
     static const QString PROMPTSTRING;
 
 public slots:
+    void connection_start();
     void startRead();
 
 signals:
-    void newMessage(QString, QDateTime);
+    void newMessage(QDateTime);
     void messageSent();
+
+private:
+    QTcpSocket* socketOut;
+
 };
 
 #endif // PROMPT_H

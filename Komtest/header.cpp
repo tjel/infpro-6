@@ -6,8 +6,7 @@
 
 Server::Server(QObject* parent) //: QObject(parent)
 {
-  connect(&server, SIGNAL(newConnection()),
-    this, SLOT(acceptConnection()));
+  connect(&server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
 
   server.listen(QHostAddress::Any, 8888);
 }
@@ -29,8 +28,8 @@ void Server::startRead()
 {
   char buffer[1024] = {0};
   client->read(buffer, client->bytesAvailable());
-  qDebug() << buffer << endl;
-  client->close();
+  //qDebug() << buffer << endl;
+  //client->close();
 }
 
 
