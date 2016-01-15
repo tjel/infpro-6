@@ -1,4 +1,4 @@
-#include "display.h"
+#include "server.h"
 #include <QTcpSocket>
 #include <QTcpServer>
 
@@ -26,6 +26,7 @@ void Display::newConnection()
     qDebug() << "Woot woot actually connected";
     qDebug() << "lol jk m8 nothing works at all";
     QTcpSocket *socket = server->nextPendingConnection();
+    qDebug() << socket->peerAddress();
     connect(socket, SIGNAL(readyRead()),
     this, SLOT(read_msg()));
 }
@@ -53,5 +54,5 @@ void Display::print(QDateTime datetime)
 
 void Display::read_msg()
 {
-     qDebug()<< socket->peerAddress()<< "  " << socket->read(socket->bytesAvailable());
+     qDebug() << socket->readAll();
 }

@@ -1,5 +1,5 @@
-#ifndef PROMPT_H
-#define PROMPT_H
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #include <QObject>
 #include <QString>
@@ -31,4 +31,3 @@ private:
 };
 
 #endif // PROMPT_H
-

@@ -9,24 +9,24 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    QThread* receivingThread = new QThread;
-    QThread* printingThread = new QThread;
+    QThread* clientThread = new QThread;
+    QThread* serverThread = new QThread;
 
     Display* displayer = new Display();
     Prompt* prompter = new Prompt();
 
-    prompter->moveToThread(receivingThread);
-    displayer->moveToThread(printingThread);
+    prompter->moveToThread(clientThread);
+    displayer->moveToThread(serverThread);
 
-    QObject::connect(printingThread, SIGNAL(started()),
+    QObject::connect(serverThread, SIGNAL(started()),
                      displayer, SLOT(server_start())); // uruchamiamy nasluch
-    QObject::connect(receivingThread, SIGNAL(started()),
+    QObject::connect(clientThread, SIGNAL(started()),
                      prompter, SLOT(connection_start())); // laczymy sie
-    QObject::connect(receivingThread, SIGNAL(started()),
+    QObject::connect(serverThread, SIGNAL(started()),
                      prompter, SLOT(startRead())); // prosimy o wiadomość
 
-    QObject::connect(prompter, SIGNAL(started()),
-                    displayer, SLOT(print(QDateTime)));
+   // QObject::connect(prompter, SIGNAL(started()),
+   //                 displayer, SLOT(print(QDateTime)));
 
 
 
@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
     QObject::connect(prompter, SIGNAL(messageSent()),
                      prompter, SLOT(startRead())); //zapętlenie promptu
 
-    receivingThread->start();
-    printingThread->start();
+    serverThread->start();
+    clientThread->start();
 
     return a.exec();
 }

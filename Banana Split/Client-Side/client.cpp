@@ -1,4 +1,4 @@
-#include "prompt.h"
+#include "client.h"
 
 QString const Prompt::PROMPTSTRING = "";
 
