@@ -6,7 +6,10 @@
 
 Server::Server(QObject* parent) //: QObject(parent)
 {
-  connect(&server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
+  connect(&server, SIGNAL(newConnection()),
+          this, SLOT(acceptConnection()));
+  connect(client, SIGNAL(readyRead()),
+          this, SLOT(startRead()));
 
   server.listen(QHostAddress::Any, 8888);
 }
@@ -19,25 +22,23 @@ Server::~Server()
 void Server::acceptConnection()
 {
   client = server.nextPendingConnection();
-
-  connect(client, SIGNAL(readyRead()),
-    this, SLOT(startRead()));
 }
 
 void Server::startRead()
 {
   char buffer[1024] = {0};
-  client->read(buffer, client->bytesAvailable());
-  //qDebug() << buffer << endl;
-  //client->close();
-}
 
+  client->read(buffer, client->bytesAvailable());
+  qDebug() << buffer << endl;
+
+  //emit donePrinting();
+}
 
 
 Client::Client(QObject* parent) //: QObject(parent)
 {
   connect(&client, SIGNAL(connected()),
-    this, SLOT(startTransfer()));
+          this, SLOT(startTransfer()));
 }
 
 Client::~Client()
@@ -53,8 +54,9 @@ void Client::start(QString address, quint16 port)
 
 void Client::startTransfer()
 {
-    QTextStream cin(stdin);
-     QString Qtext;
-     Qtext = cin.readLine();
+  QTextStream cin(stdin);
+  QString Qtext;
+
+  Qtext = cin.readLine();
   client.write(Qtext.toLatin1());
 }

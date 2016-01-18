@@ -11,7 +11,7 @@
 #include <QDebug>
 
 
-class Server: public QObject
+class Server : public QObject
 {
     Q_OBJECT
 
@@ -26,6 +26,9 @@ public slots:
 private:
   QTcpServer server;
   QTcpSocket* client;
+
+signals:
+  void donePrinting();
 };
 
 

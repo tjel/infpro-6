@@ -97,12 +97,15 @@ int main(int argc, char *argv[])
 
 int main (int argc, char** argv)
 {
-    QCoreApplication app(argc, argv);
+  QCoreApplication app(argc, argv);
 
   Server server;
   Client client;
 
-  client.start("192.168.0.13", 8888);
+  /*QObject::connect(&server, SIGNAL(donePrinting()),
+                   &client, SLOT(startTransfer())); //zapętlenie*/
+
+  client.start("155.158.170.160", 8888);
 
   return app.exec();
 }
