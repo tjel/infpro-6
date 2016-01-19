@@ -26,11 +26,12 @@ class ChatWindow : public QObject
 private slots:
     void sendMessage();
     void getMessage();
+    void disableInputWidgets();
+    void enableInputWidgets();
 
 public:
     ChatWindow(ChatWidget*, QHostAddress); // przy nawiazywaniu polaczenia
     ChatWindow(ChatWidget*, QTcpSocket*); // przy akceptowaniu polaczenia
-    void connectTo(QHostAddress);
 };
 
 class Chat : public QObject

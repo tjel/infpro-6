@@ -18,46 +18,56 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
     this->recipient = this->socket->peerAddress();
 
     connectSignals();
+    enableInputWidgets();
 }
 
 void ChatWindow::connectSignals()
 {
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
-    connect(this->socket, SIGNAL(connected()),
-            this->widget->ui->msgInput, SLOT(setEnabled(bool)));
     connect(this->socket, SIGNAL(disconnected()),
-            this->widget->ui->msgInput, SLOT(setDisabled(bool)));
-            // ^ tu się przyda prawowity slot na obsługę widżetów przy (roz)łączeniu
+            this, SLOT(disableInputWidgets()));
+    connect(this->socket, SIGNAL(connected()),
+            this, SLOT(enableInputWidgets()));
     connect(this->socket, SIGNAL(readyRead()),
             this, SLOT(getMessage()));
 }
 
-void ChatWindow::connectTo(QHostAddress address)
+void ChatWindow::enableInputWidgets()
 {
-    this->socket->connectToHost(address, 8888);
+    this->widget->ui->sendButton->setEnabled(true);
+    this->widget->ui->disconnectButton->setEnabled(true);
+}
+
+void ChatWindow::disableInputWidgets()
+{
+    this->widget->ui->sendButton->setEnabled(false);
+    this->widget->ui->disconnectButton->setEnabled(false);
 }
 
 void ChatWindow::sendMessage()
 {
     QString message = this->widget->ui->msgInput->toPlainText();
 
-    this->socket->write(message.toUtf8());
+    if (message.length())
+    {
+        this->socket->write(message.toUtf8());
 
-    this->widget->ui->msgInput->clear();
+        this->widget->ui->msgInput->clear();
 
-    // co jeśli nie dojdzie? :<
+        // co jeśli nie dojdzie? :<
 
-    QString date = QDate::currentDate().toString();
-    QString time = QTime::currentTime().toString();
+        QString date = QDate::currentDate().toString();
+        QString time = QTime::currentTime().toString();
 
-    this->widget->ui->msgOutput->setText(QString(
-                this->widget->ui->msgOutput->toPlainText()
-              + "["
-              + time
-              + ", ja]: "
-              + message
-              + "\n"));
+        this->widget->ui->msgOutput->setText(QString(
+                   this->widget->ui->msgOutput->toPlainText()
+                 + "["
+                 + time
+                 + ", ja]: "
+                 + message
+                 + "\n"));
+    }
 }
 
 // przydałaby się do wyświetlania wspólna funkcja typu toOutput(kto,co), która wyłuskuje już na miejscu datę/czas
@@ -110,11 +120,7 @@ void Chat::addChatWindow(QHostAddress address)
     int id = this->gui->ui->tabs->addTab(newWidget, address.toString());
 
     windows.insert(id, new ChatWindow(newWidget, QHostAddress(address)));
-    // napisac jakas funkcje GUIa, ktora przelacza go na ten nowy tab
-    // i ja tu trzasnac
-
-    this->windows[id]->connectTo(address);
-    // prowizorka, raczej nie Chat powinien to wywoływać
+    // GUI przełącza się na nowy tab
 }
 
 void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address)

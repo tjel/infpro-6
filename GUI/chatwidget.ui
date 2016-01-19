@@ -14,6 +14,9 @@
    <string>Form</string>
   </property>
   <widget class="QPlainTextEdit" name="msgInput">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -34,6 +37,9 @@
    </property>
   </widget>
   <widget class="QPushButton" name="sendButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>390</x>
@@ -45,8 +51,14 @@
    <property name="text">
     <string>Send</string>
    </property>
+   <property name="autoDefault">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QPushButton" name="disconnectButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>30</x>
