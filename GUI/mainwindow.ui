@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralWidget">
    <widget class="QTabWidget" name="tabs">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="geometry">
      <rect>

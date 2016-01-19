@@ -10,8 +10,6 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
             this, SLOT(sendMessage()));
     connect(this->sendingSocket, SIGNAL(connected()),
             this->widget->ui->msgInput, SLOT(setEnabled(bool)));
-
-    //connectSignals();
 }
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
@@ -26,11 +24,9 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
             this, SLOT(printMessage()));
     connect(this->sendingSocket, SIGNAL(connected()),
             this->widget->ui->msgInput, SLOT(setEnabled(bool)));
-
-   // connectSignals();
 }
 
-void ChatWindow::connectSignals()
+void ChatWindow::connectSignals() // nie może być w takiej potaci wspólna dla obu konstruktorów
 {
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
@@ -50,6 +46,15 @@ void ChatWindow::sendMessage()
     QString message = this->widget->ui->msgInput->toPlainText();
 
     this->sendingSocket->write(message.toUtf8());
+
+    this->widget->ui->msgInput->clear();
+
+    // może jakieś sprawdzanie, czy doszło? :<
+    this->widget->ui->msgOutput->setText(QString(
+                this->widget->ui->msgOutput->toPlainText()
+                + "[/DATACZAS, ja:] "
+                + message
+                + "\n"));
 }
 
 void ChatWindow::printMessage()
@@ -92,6 +97,7 @@ void Chat::addChatWindow(QHostAddress address)
     // i ja tu trzasnac
 
     this->windows[id]->connectTo(address);
+    // prowizorka, raczej nie Chat powinien to wywoływać
 }
 
 void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address)
