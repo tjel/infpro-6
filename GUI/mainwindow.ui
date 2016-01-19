@@ -36,7 +36,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>580</x>
+      <x>584</x>
       <y>270</y>
       <width>75</width>
       <height>23</height>
@@ -46,13 +46,13 @@
      <string>Connect</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="addressInput">
+   <widget class="QLineEdit" name="addressInput">
     <property name="geometry">
      <rect>
-      <x>556</x>
+      <x>560</x>
       <y>240</y>
-      <width>128</width>
-      <height>24</height>
+      <width>121</width>
+      <height>20</height>
      </rect>
     </property>
    </widget>

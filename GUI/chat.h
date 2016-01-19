@@ -13,24 +13,19 @@
 #include "ui_mainwindow.h"
 #include "ui_chatwidget.h"
 
-// Do zrobienia
-// koordynacja nazwiazywania polaczen, usuwania ChatWindowsow
-//    po usunięciu odpowiadajacych im tabow
-
 class ChatWindow : public QObject
 {
     Q_OBJECT
 
     ChatWidget* widget;
     QHostAddress recipient;
-    QTcpSocket* readingSocket;
-    QTcpSocket* sendingSocket;
+    QTcpSocket* socket;
 
     void connectSignals();
 
 private slots:
     void sendMessage();
-    void printMessage();
+    void getMessage();
 
 public:
     ChatWindow(ChatWidget*, QHostAddress); // przy nawiazywaniu polaczenia

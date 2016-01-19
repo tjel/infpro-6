@@ -4,65 +4,82 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
 {
     this->widget = newWidget;
     this->recipient = address;
-    this->sendingSocket = new QTcpSocket();
+    this->socket = new QTcpSocket();
 
-    connect(this->widget->ui->sendButton, SIGNAL(clicked()),
-            this, SLOT(sendMessage()));
-    connect(this->sendingSocket, SIGNAL(connected()),
-            this->widget->ui->msgInput, SLOT(setEnabled(bool)));
+    this->socket->connectToHost(address, 8888);
+
+    connectSignals();
 }
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
 {
     this->widget = newWidget;
-    this->readingSocket = socket;
-    this->sendingSocket = new QTcpSocket();
+    this->socket = socket;
+    this->recipient = this->socket->peerAddress();
 
-    connect(this->widget->ui->sendButton, SIGNAL(clicked()),
-            this, SLOT(sendMessage()));
-    connect(this->readingSocket, SIGNAL(readyRead()),
-            this, SLOT(printMessage()));
-    connect(this->sendingSocket, SIGNAL(connected()),
-            this->widget->ui->msgInput, SLOT(setEnabled(bool)));
+    connectSignals();
 }
 
-void ChatWindow::connectSignals() // nie może być w takiej potaci wspólna dla obu konstruktorów
+void ChatWindow::connectSignals()
 {
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
-    connect(this->readingSocket, SIGNAL(readyRead()),
-            this, SLOT(printMessage()));
-    connect(this->sendingSocket, SIGNAL(connected()),
+    connect(this->socket, SIGNAL(connected()),
             this->widget->ui->msgInput, SLOT(setEnabled(bool)));
+    connect(this->socket, SIGNAL(disconnected()),
+            this->widget->ui->msgInput, SLOT(setDisabled(bool)));
+            // ^ tu się przyda prawowity slot na obsługę widżetów przy (roz)łączeniu
+    connect(this->socket, SIGNAL(readyRead()),
+            this, SLOT(getMessage()));
 }
 
 void ChatWindow::connectTo(QHostAddress address)
 {
-    this->sendingSocket->connectToHost(address, 8888);
+    this->socket->connectToHost(address, 8888);
 }
 
 void ChatWindow::sendMessage()
 {
     QString message = this->widget->ui->msgInput->toPlainText();
 
-    this->sendingSocket->write(message.toUtf8());
+    this->socket->write(message.toUtf8());
 
     this->widget->ui->msgInput->clear();
 
-    // może jakieś sprawdzanie, czy doszło? :<
+    // co jeśli nie dojdzie? :<
+
+    QString date = QDate::currentDate().toString();
+    QString time = QTime::currentTime().toString();
+
     this->widget->ui->msgOutput->setText(QString(
                 this->widget->ui->msgOutput->toPlainText()
-                + "[/DATACZAS, ja:] "
-                + message
-                + "\n"));
+              + "["
+              + time
+              + ", ja]: "
+              + message
+              + "\n"));
 }
 
-void ChatWindow::printMessage()
+// przydałaby się do wyświetlania wspólna funkcja typu toOutput(kto,co), która wyłuskuje już na miejscu datę/czas
+
+void ChatWindow::getMessage()
 {
-    QString message = this->readingSocket->read(2000);
+    QString message = this->socket->read(2000); // jakiś globalny MAXSIZE?
 
-    this->widget->ui->msgOutput->setText(message);
+    QString date = QDate::currentDate().toString();
+    QString time = QTime::currentTime().toString();
+
+    this->widget->ui->msgOutput->setText(QString(
+                this->widget->ui->msgOutput->toPlainText()
+              + "["
+              + time
+              + ", "
+              + this->recipient.toString() // nieładnie za każdym razem go stringować, trzeba by to już mieć na miejscu
+              + "]: "
+              + message
+              + "\n"));
 }
+
 
 Chat::Chat(MainWindow* mw)
 {
@@ -78,7 +95,7 @@ Chat::Chat(MainWindow* mw)
 
 void Chat::checkAddress()
 {
-    QString text = this->gui->ui->addressInput->toPlainText();
+    QString text = this->gui->ui->addressInput->text();
     // if text not already in chatWindows.addresses (and preferably is a proper IP address)
     // zaczynamy procedure laczenia...
 
