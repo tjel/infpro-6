@@ -4,16 +4,30 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
 {
     this->widget = newWidget;
     this->recipient = address;
+    this->sendingSocket = new QTcpSocket();
 
-    connectSignals();
+    connect(this->widget->ui->sendButton, SIGNAL(clicked()),
+            this, SLOT(sendMessage()));
+    connect(this->sendingSocket, SIGNAL(connected()),
+            this->widget->ui->msgInput, SLOT(setEnabled(bool)));
+
+    //connectSignals();
 }
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
 {
     this->widget = newWidget;
     this->readingSocket = socket;
+    this->sendingSocket = new QTcpSocket();
 
-    connectSignals();
+    connect(this->widget->ui->sendButton, SIGNAL(clicked()),
+            this, SLOT(sendMessage()));
+    connect(this->readingSocket, SIGNAL(readyRead()),
+            this, SLOT(printMessage()));
+    connect(this->sendingSocket, SIGNAL(connected()),
+            this->widget->ui->msgInput, SLOT(setEnabled(bool)));
+
+   // connectSignals();
 }
 
 void ChatWindow::connectSignals()
@@ -22,20 +36,20 @@ void ChatWindow::connectSignals()
             this, SLOT(sendMessage()));
     connect(this->readingSocket, SIGNAL(readyRead()),
             this, SLOT(printMessage()));
-    connect(&this->sendingSocket, SIGNAL(connected()),
+    connect(this->sendingSocket, SIGNAL(connected()),
             this->widget->ui->msgInput, SLOT(setEnabled(bool)));
 }
 
 void ChatWindow::connectTo(QHostAddress address)
 {
-    this->sendingSocket.connectToHost(address, 8888);
+    this->sendingSocket->connectToHost(address, 8888);
 }
 
 void ChatWindow::sendMessage()
 {
     QString message = this->widget->ui->msgInput->toPlainText();
 
-    this->sendingSocket.write(message.toUtf8());
+    this->sendingSocket->write(message.toUtf8());
 }
 
 void ChatWindow::printMessage()

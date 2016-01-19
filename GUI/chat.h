@@ -24,7 +24,7 @@ class ChatWindow : public QObject
     ChatWidget* widget;
     QHostAddress recipient;
     QTcpSocket* readingSocket;
-    QTcpSocket sendingSocket;
+    QTcpSocket* sendingSocket;
 
     void connectSignals();
 
