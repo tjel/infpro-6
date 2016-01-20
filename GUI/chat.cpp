@@ -2,6 +2,8 @@
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
 {
+    qsrand((uint)QTime::currentTime().msec());
+
     this->widget = newWidget;
     this->recipient = address;
     this->socket = new QTcpSocket();
@@ -13,6 +15,8 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
 {
+    qsrand((uint)QTime::currentTime().msec());
+
     this->widget = newWidget;
     this->socket = socket;
     this->recipient = this->socket->peerAddress();
@@ -42,7 +46,7 @@ void ChatWindow::enableInputWidgets()
     this->widget->ui->disconnectButton->setEnabled(true);
 }
 
-void ChatWindow::keyExchange1()
+/*void ChatWindow::keyExchange1()
 {
     while(this->encryptionKey==-1) //Placeholderowy publiczny key exchange
     {
@@ -55,13 +59,41 @@ void ChatWindow::keyExchange2(QString key)
 {
     this->decryptionKey=key.toInt();
 }
+*/
+
+void ChatWindow::keyExchange1()
+{
+
+    unsigned int base = 24611, modulus = 44533; //Stale ktorych uzywamy do tworzenia kluczy. Wzialbym wieksze, ale nie mam kalkulatora ktory by liczyl eulera dla 6+ cyfrowych liczb bez zawieszania sie
+    unsigned int random =  0;
+    while(random==0)
+    {
+        for(int i=0;i<qrand()%7;i++)//losujemy kilkukrotnie randomowa liczbe, bo qrand jest slaby i jego pierwszy wynik jest zawsze zblizony do seeda
+        {
+        random=qrand();
+        }
+    }
+    this->secretA=random;
+    this->keyA=(base^random)%modulus;
+    this->socket->write(QString::number(keyA).toUtf8());
+}
+
+void ChatWindow::keyExchange2(QString key)
+{
+    unsigned int base = 24611, modulus = 44533;
+    unsigned int keyB=key.toInt();
+    this->encryptionKey = (keyB^this->secretA)%modulus;
+    qDebug()<< this->encryptionKey;
+
+}
 
 QString ChatWindow::encriptior(QString message)
 {
     QString messageOut="";
     for(int i=0;i<message.length();i++)
     {
-        messageOut.append(message.at(i).unicode()*this->encryptionKey);
+        messageOut.append(message.at(i).unicode()+this->encryptionKey);
+        qDebug()<<"Out: " << message.at(i).unicode() << " + " << this->encryptionKey << " = " << (message.at(i).unicode()+this->encryptionKey);
         //messageOut.append(message.at(i));
     }
     return messageOut;
@@ -72,8 +104,9 @@ QString ChatWindow::decriptior(QString message)
     QString messageIn="";
     for(int i=0;i<message.length();i++)
     {
-        messageIn.append(message.at(i).unicode()/this->decryptionKey);
+        messageIn.append(message.at(i).unicode()-this->encryptionKey);
         //messageOut.append(message.at(i));
+        qDebug()<<"In: " << message.at(i).unicode() << " - " << this->encryptionKey << " = " << (message.at(i).unicode()-this->encryptionKey);
     }
     return messageIn;
 }
@@ -116,7 +149,7 @@ void ChatWindow::getMessage()
 {
     QString message = this->socket->read(2000); // jakiś globalny MAXSIZE?
 
-    if(this->decryptionKey!=-1)
+    if(this->encryptionKey!=0)
     {
         message = decriptior(message);
         QString date = QDate::currentDate().toString();

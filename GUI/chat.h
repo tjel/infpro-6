@@ -20,7 +20,7 @@ class ChatWindow : public QObject
     ChatWidget* widget;
     QHostAddress recipient;
     QTcpSocket* socket;
-    int encryptionKey=-1, decryptionKey=-1;
+    unsigned int secretA=0, keyA=0,encryptionKey=0;
 
     void connectSignals();
 
