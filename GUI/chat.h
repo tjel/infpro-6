@@ -43,7 +43,7 @@ private slots:
     void connectionEstablished();
     void connectionFailed();
     void connectionLost();
-    void setSelfLabel(QString); // na razie nie używane
+    void setSelfLabel(QString);
     void setRecipientLabel(QString);
 
 public:

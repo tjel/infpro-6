@@ -1,26 +1,28 @@
 #include "chat.h"
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
+    : keyA(0),
+      secretA(0),
+      encryptionKey(0)
 {
     qsrand((uint)QTime::currentTime().msec());
 
     this->widget = newWidget;
     this->recipient = address;
     this->socket = new QTcpSocket();
-    this->keyA = this->secretA = this->encryptionKey = 0;
 
     connect(this->socket, SIGNAL(connected()),
             this, SLOT(connectionEstablished()));
+    connect(this->socket, SIGNAL(connected()),
+            this, SLOT(keyExchange1()));
 
     toOutput("Connecting...");
 
     this->socket->connectToHost(address, 8888);
-    if (!this->socket->waitForConnected(5000)) // zamula GUIa, choć nie powinien
+    if (!this->socket->waitForConnected(5000)) // zamula GUIa na 5 sekund :<
         connectionFailed();
     else
     {
-        this->keyExchange1();
-
         connect(this->widget->ui->sendButton, SIGNAL(clicked()),
                 this, SLOT(sendMessage()));
         connect(this->socket, SIGNAL(disconnected()),
@@ -34,23 +36,28 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
 }
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
+    : keyA(0),
+      secretA(0),
+      encryptionKey(0)
 {
     qsrand((uint)QTime::currentTime().msec());
 
     this->widget = newWidget;
     this->socket = socket;
     this->recipient = this->socket->peerAddress();
-    this->keyA = this->secretA = this->encryptionKey = 0;
 
+    connect(this->socket, SIGNAL(readyRead()),
+            this, SLOT(getMessage()));
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
     connect(this->socket, SIGNAL(disconnected()),
             this, SLOT(connectionLost()));
     connect(this->socket, SIGNAL(connected()),
+            this, SLOT(keyExchange1()));
+    connect(this->socket, SIGNAL(connected()),
             this, SLOT(connectionEstablished()));
-    connect(this->socket, SIGNAL(readyRead()),
-            this, SLOT(getMessage()));
 
+    keyExchange1();
     initUserLabels();
     enableInputWidgets();
 }
@@ -74,7 +81,6 @@ void ChatWindow::connectionFailed()
     QString output = "Connection failed. You may want to rethink your life and/or try again.";
 
     toOutput(output);
-    // input widgets still disabled so chill
     // Disconnect button -> Try Again button?
 }
 
@@ -89,8 +95,6 @@ void ChatWindow::connectionLost()
 
 void ChatWindow::toOutput(QString text)
 {
-    /* do ogólnowojskowych komunikatów */
-
     this->widget->ui->msgOutput->setText( QString(
                this->widget->ui->msgOutput->toPlainText()
              + text
