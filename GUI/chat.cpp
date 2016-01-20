@@ -23,6 +23,8 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
 
 void ChatWindow::connectSignals()
 {
+    //connect(this->widget->ui->nameInput, SIGNAL(textChanged(QString)), //Zmienianie imiena, zeby bylo czytelniej
+    //        this, SLOT(changeName()));                                   //Na razie zescrapowane
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
     connect(this->socket, SIGNAL(disconnected()),
@@ -35,8 +37,45 @@ void ChatWindow::connectSignals()
 
 void ChatWindow::enableInputWidgets()
 {
+    this->keyExchange1(); //zanim cokolwiek zrobimy, wymieniamy klucze szyfrowania
     this->widget->ui->sendButton->setEnabled(true);
     this->widget->ui->disconnectButton->setEnabled(true);
+}
+
+void ChatWindow::keyExchange1()
+{
+    while(this->encryptionKey==-1) //Placeholderowy publiczny key exchange
+    {
+        this->encryptionKey=qrand();
+    }
+    this->socket->write(QString::number(encryptionKey).toUtf8());
+}
+
+void ChatWindow::keyExchange2(QString key)
+{
+    this->decryptionKey=key.toInt();
+}
+
+QString ChatWindow::encriptior(QString message)
+{
+    QString messageOut="";
+    for(int i=0;i<message.length();i++)
+    {
+        messageOut.append(message.at(i).unicode()*this->encryptionKey);
+        //messageOut.append(message.at(i));
+    }
+    return messageOut;
+}
+
+QString ChatWindow::decriptior(QString message)
+{
+    QString messageIn="";
+    for(int i=0;i<message.length();i++)
+    {
+        messageIn.append(message.at(i).unicode()/this->decryptionKey);
+        //messageOut.append(message.at(i));
+    }
+    return messageIn;
 }
 
 void ChatWindow::disableInputWidgets()
@@ -48,10 +87,11 @@ void ChatWindow::disableInputWidgets()
 void ChatWindow::sendMessage()
 {
     QString message = this->widget->ui->msgInput->toPlainText();
-
+    QString messageOut = "";
     if (message.length())
     {
-        this->socket->write(message.toUtf8());
+        messageOut=encriptior(message);
+        this->socket->write(messageOut.toUtf8());
 
         this->widget->ui->msgInput->clear();
 
@@ -76,20 +116,27 @@ void ChatWindow::getMessage()
 {
     QString message = this->socket->read(2000); // jakiś globalny MAXSIZE?
 
-    QString date = QDate::currentDate().toString();
-    QString time = QTime::currentTime().toString();
+    if(this->decryptionKey!=-1)
+    {
+        message = decriptior(message);
+        QString date = QDate::currentDate().toString();
+        QString time = QTime::currentTime().toString();
 
-    this->widget->ui->msgOutput->setText(QString(
-                this->widget->ui->msgOutput->toPlainText()
-              + "["
-              + time
-              + ", "
-              + this->recipient.toString() // nieładnie za każdym razem go stringować, trzeba by to już mieć na miejscu
-              + "]: "
-              + message
-              + "\n"));
+        this->widget->ui->msgOutput->setText(QString(
+                    this->widget->ui->msgOutput->toPlainText()
+                  + "["
+                  + time
+                  + ", "
+                  + this->recipient.toString() // nieładnie za każdym razem go stringować, trzeba by to już mieć na miejscu
+                  + "]: "
+                  + message
+                  + "\n"));
+    }
+    else
+    {
+        keyExchange2(message);
+    }
 }
-
 
 Chat::Chat(MainWindow* mw)
 {
@@ -105,11 +152,11 @@ Chat::Chat(MainWindow* mw)
 
 void Chat::checkAddress()
 {
-    QString text = this->gui->ui->addressInput->text();
+    QString adress = this->gui->ui->addressInput->text();
     // if text not already in chatWindows.addresses (and preferably is a proper IP address)
     // zaczynamy procedure laczenia...
 
-    addChatWindow(QHostAddress(text));
+    addChatWindow(QHostAddress(adress));
 }
 
 void Chat::addChatWindow(QHostAddress address)
@@ -118,6 +165,11 @@ void Chat::addChatWindow(QHostAddress address)
 
     ChatWidget* newWidget = new ChatWidget();
     int id = this->gui->ui->tabs->addTab(newWidget, address.toString());
+    //name = name.simplified();
+    //if(name.compare(""))
+    //{
+    //    this->gui->ui->tabs->widget(this->gui->ui->tabs->count())->text="a";
+    //}
 
     windows.insert(id, new ChatWindow(newWidget, QHostAddress(address)));
     // GUI przełącza się na nowy tab

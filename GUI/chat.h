@@ -20,12 +20,19 @@ class ChatWindow : public QObject
     ChatWidget* widget;
     QHostAddress recipient;
     QTcpSocket* socket;
+    int encryptionKey=-1, decryptionKey=-1;
 
     void connectSignals();
 
 private slots:
     void sendMessage();
     void getMessage();
+
+    void keyExchange1();
+    void keyExchange2(QString);
+    QString encriptior(QString);
+    QString decriptior(QString);
+
     void disableInputWidgets();
     void enableInputWidgets();
 
