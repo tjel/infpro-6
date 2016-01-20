@@ -16,25 +16,35 @@
 class ChatWindow : public QObject
 {
     Q_OBJECT
+    friend class ChatSync;
 
     ChatWidget* widget;
     QHostAddress recipient;
     QTcpSocket* socket;
-    unsigned int secretA=0, keyA=0,encryptionKey=0;
+    QString selfLabel;
+    QString recipientLabel;
+    unsigned int secretA;
+    unsigned int keyA;
+    unsigned int encryptionKey;
 
-    void connectSignals();
+    void toOutput(QString); // do ogólnowojskowych komunikatów
+    void toOutput(QString, QString); // do wyświetlania wiadomości
+    void initUserLabels(); // domyślne aliasy
 
 private slots:
     void sendMessage();
     void getMessage();
-
     void keyExchange1();
     void keyExchange2(QString);
     QString encriptior(QString);
     QString decriptior(QString);
-
     void disableInputWidgets();
     void enableInputWidgets();
+    void connectionEstablished();
+    void connectionFailed();
+    void connectionLost();
+    void setSelfLabel(QString); // na razie nie używane
+    void setRecipientLabel(QString);
 
 public:
     ChatWindow(ChatWidget*, QHostAddress); // przy nawiazywaniu polaczenia
@@ -54,7 +64,7 @@ class Chat : public QObject
     void addChatWindow(QTcpSocket*, QHostAddress); // przy akceptowaniu polaczen
 
 public:
-    Chat(MainWindow*);\
+    Chat(MainWindow*);
 
 public slots:
     void incomingConnection();

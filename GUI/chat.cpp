@@ -7,10 +7,30 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
     this->widget = newWidget;
     this->recipient = address;
     this->socket = new QTcpSocket();
+    this->keyA = this->secretA = this->encryptionKey = 0;
+
+    connect(this->socket, SIGNAL(connected()),
+            this, SLOT(connectionEstablished()));
+
+    toOutput("Connecting...");
 
     this->socket->connectToHost(address, 8888);
+    if (!this->socket->waitForConnected(5000)) // zamula GUIa, choć nie powinien
+        connectionFailed();
+    else
+    {
+        this->keyExchange1();
 
-    connectSignals();
+        connect(this->widget->ui->sendButton, SIGNAL(clicked()),
+                this, SLOT(sendMessage()));
+        connect(this->socket, SIGNAL(disconnected()),
+                this, SLOT(connectionLost()));
+        connect(this->socket, SIGNAL(readyRead()),
+                this, SLOT(getMessage()));
+
+        initUserLabels();
+    }
+
 }
 
 ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
@@ -20,30 +40,82 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
     this->widget = newWidget;
     this->socket = socket;
     this->recipient = this->socket->peerAddress();
+    this->keyA = this->secretA = this->encryptionKey = 0;
 
-    connectSignals();
-    enableInputWidgets();
-}
-
-void ChatWindow::connectSignals()
-{
-    //connect(this->widget->ui->nameInput, SIGNAL(textChanged(QString)), //Zmienianie imiena, zeby bylo czytelniej
-    //        this, SLOT(changeName()));                                   //Na razie zescrapowane
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
     connect(this->socket, SIGNAL(disconnected()),
-            this, SLOT(disableInputWidgets()));
+            this, SLOT(connectionLost()));
     connect(this->socket, SIGNAL(connected()),
-            this, SLOT(enableInputWidgets()));
+            this, SLOT(connectionEstablished()));
     connect(this->socket, SIGNAL(readyRead()),
             this, SLOT(getMessage()));
+
+    initUserLabels();
+    enableInputWidgets();
 }
 
 void ChatWindow::enableInputWidgets()
 {
-    this->keyExchange1(); //zanim cokolwiek zrobimy, wymieniamy klucze szyfrowania
     this->widget->ui->sendButton->setEnabled(true);
     this->widget->ui->disconnectButton->setEnabled(true);
+}
+
+void ChatWindow::connectionEstablished()
+{
+    QString output = "Connection established.";
+
+    toOutput(output);
+    enableInputWidgets();
+}
+
+void ChatWindow::connectionFailed()
+{
+    QString output = "Connection failed. You may want to rethink your life and/or try again.";
+
+    toOutput(output);
+    // input widgets still disabled so chill
+    // Disconnect button -> Try Again button?
+}
+
+void ChatWindow::connectionLost()
+{
+    QString output = "Connection lost. Lord knows if there are any means of solving this right now.";
+
+    toOutput(output);
+    disableInputWidgets();
+    // Disconnect button -> Reconnect button?
+}
+
+void ChatWindow::toOutput(QString text)
+{
+    /* do ogólnowojskowych komunikatów */
+
+    this->widget->ui->msgOutput->setText( QString(
+               this->widget->ui->msgOutput->toPlainText()
+             + text
+             + "\n"));
+}
+
+void ChatWindow::toOutput(QString who, QString what)
+{
+    QString time = QDateTime::currentDateTime().toString(QString("hh:mm:ss"));
+
+    this->widget->ui->msgOutput->setText( QString(
+               this->widget->ui->msgOutput->toPlainText()
+             + "["
+             + time
+             + ", "
+             + who
+             + "]: "
+             + what
+             + "\n"));
+}
+
+void ChatWindow::initUserLabels()
+{
+    this->selfLabel = QString("me");
+    this->recipientLabel = this->recipient.toString();
 }
 
 /*void ChatWindow::keyExchange1()
@@ -120,55 +192,49 @@ void ChatWindow::disableInputWidgets()
 void ChatWindow::sendMessage()
 {
     QString message = this->widget->ui->msgInput->toPlainText();
-    QString messageOut = "";
+    QString encryptedMessage;
+
     if (message.length())
     {
-        messageOut=encriptior(message);
-        this->socket->write(messageOut.toUtf8());
+        encryptedMessage = encriptior(message);
 
+        this->socket->write(encryptedMessage.toUtf8());
         this->widget->ui->msgInput->clear();
 
         // co jeśli nie dojdzie? :<
-
-        QString date = QDate::currentDate().toString();
-        QString time = QTime::currentTime().toString();
-
-        this->widget->ui->msgOutput->setText(QString(
-                   this->widget->ui->msgOutput->toPlainText()
-                 + "["
-                 + time
-                 + ", ja]: "
-                 + message
-                 + "\n"));
+        toOutput(this->selfLabel, message);
     }
 }
-
-// przydałaby się do wyświetlania wspólna funkcja typu toOutput(kto,co), która wyłuskuje już na miejscu datę/czas
 
 void ChatWindow::getMessage()
 {
     QString message = this->socket->read(2000); // jakiś globalny MAXSIZE?
+    QString decryptedMessage;
 
-    if(this->encryptionKey!=0)
+    if (this->encryptionKey != 0)
     {
-        message = decriptior(message);
-        QString date = QDate::currentDate().toString();
-        QString time = QTime::currentTime().toString();
+        decryptedMessage = decriptior(message);
 
-        this->widget->ui->msgOutput->setText(QString(
-                    this->widget->ui->msgOutput->toPlainText()
-                  + "["
-                  + time
-                  + ", "
-                  + this->recipient.toString() // nieładnie za każdym razem go stringować, trzeba by to już mieć na miejscu
-                  + "]: "
-                  + message
-                  + "\n"));
+        toOutput(this->recipientLabel, decryptedMessage);
     }
     else
     {
         keyExchange2(message);
     }
+}
+
+void ChatWindow::setSelfLabel(QString label)
+{
+    // if not something terrible
+    this->selfLabel = label;
+    // else toOutput("Not gonna happen");
+}
+
+void ChatWindow::setRecipientLabel(QString label)
+{
+    // if kosher
+    this->recipientLabel = label;
+    // else toOutput("Yer mum");
 }
 
 Chat::Chat(MainWindow* mw)
@@ -205,7 +271,7 @@ void Chat::addChatWindow(QHostAddress address)
     //}
 
     windows.insert(id, new ChatWindow(newWidget, QHostAddress(address)));
-    // GUI przełącza się na nowy tab
+    this->gui->ui->tabs->setCurrentIndex(id);
 }
 
 void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address)
