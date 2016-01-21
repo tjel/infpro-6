@@ -160,48 +160,52 @@ void ChatWindow::keyExchange1()
 
     unsigned int base = 24611, modulus = 44533; //Stale ktorych uzywamy do tworzenia kluczy. Wzialbym wieksze, ale nie mam kalkulatora ktory by liczyl eulera dla 6+ cyfrowych liczb bez zawieszania sie
     unsigned int random =  0;
-    while(random==0)
+
+    while(random == 0)
     {
-        for(int i=0;i<qrand()%7;i++)//losujemy kilkukrotnie randomowa liczbe, bo qrand jest slaby i jego pierwszy wynik jest zawsze zblizony do seeda
+        for (int i=0; i<qrand()%7; i++) //losujemy kilkukrotnie randomowa liczbe, bo qrand jest slaby i jego pierwszy wynik jest zawsze zblizony do seeda
         {
-        random=qrand();
+            random=qrand();
         }
     }
-    this->secretA=random;
-    this->keyA=(base^random)%modulus;
+
+    this->secretA = random;
+    this->keyA = ((int)pow(base, random))%modulus;
     this->socket->write(QString::number(keyA).toUtf8());
 }
 
 void ChatWindow::keyExchange2(QString key)
 {
-    unsigned int base = 24611, modulus = 44533;
-    unsigned int keyB=key.toInt();
-    this->encryptionKey = (keyB^this->secretA)%modulus;
+    unsigned int modulus = 44533;
+    unsigned int keyB = key.toInt();
+    this->encryptionKey = ((int)pow(keyB, this->secretA))%modulus;
     qDebug()<< this->encryptionKey;
-
 }
 
 QString ChatWindow::encriptior(QString message)
 {
     QString messageOut="";
-    for(int i=0;i<message.length();i++)
+
+    for(int i=0; i<message.length(); i++)
     {
-        messageOut.append(message.at(i).unicode()+this->encryptionKey);
+        messageOut.append(message.at(i).unicode() + this->encryptionKey);
         qDebug()<<"Out: " << message.at(i).unicode() << " + " << this->encryptionKey << " = " << (message.at(i).unicode()+this->encryptionKey);
         //messageOut.append(message.at(i));
     }
+
     return messageOut;
 }
 
 QString ChatWindow::decriptior(QString message)
 {
-    QString messageIn="";
-    for(int i=0;i<message.length();i++)
+    QString messageIn = "";
+    for(int i=0; i<message.length(); i++)
     {
-        messageIn.append(message.at(i).unicode()-this->encryptionKey);
+        messageIn.append(message.at(i).unicode() - this->encryptionKey);
         //messageOut.append(message.at(i));
         qDebug()<<"In: " << message.at(i).unicode() << " - " << this->encryptionKey << " = " << (message.at(i).unicode()-this->encryptionKey);
     }
+
     return messageIn;
 }
 
