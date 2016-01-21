@@ -10,6 +10,7 @@
 #include <QHostAddress>
 #include "mainwindow.h"
 #include "chatwidget.h"
+#include "database.h"
 #include "ui_mainwindow.h"
 #include "ui_chatwidget.h"
 
@@ -45,6 +46,10 @@ private slots:
     void connectionLost();
     void setSelfLabel(QString);
     void setRecipientLabel(QString);
+    void saveMessage(QString, QString);
+
+signals:
+    void toDatabase(QString, QString);
 
 public:
     ChatWindow(ChatWidget*, QHostAddress); // przy nawiazywaniu polaczenia
@@ -57,6 +62,7 @@ class Chat : public QObject
 
     MainWindow* gui;
     QTcpServer listener;
+    Database* db;
     QMap<int, ChatWindow*> windows;
 
     void initSignals();
@@ -69,6 +75,7 @@ public:
 public slots:
     void incomingConnection();
     void checkAddress();
+    void toDatabase(QString, QString, QString);
 };
 
 #endif // CHAT_H

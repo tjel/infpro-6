@@ -15,3 +15,9 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::openHistory()
+{
+    ArchiveWindow* archive = new ArchiveWindow(this);
+    archive->show();
+}

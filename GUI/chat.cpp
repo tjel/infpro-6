@@ -116,6 +116,24 @@ void ChatWindow::toOutput(QString who, QString what)
              + "\n"));
 }
 
+void ChatWindow::saveMessage(QString sender, QString message)
+{
+    QString from, to;
+
+    if (sender == "self")
+    {
+        from = "me";
+        to = recipient.toString();
+    }
+    else
+    {
+        from = recipient.toString();
+        to = "self";
+    }
+
+    emit toDatabase(from, message);
+}
+
 void ChatWindow::initUserLabels()
 {
     this->selfLabel = QString("me");
@@ -205,8 +223,9 @@ void ChatWindow::sendMessage()
         this->socket->write(encryptedMessage.toUtf8());
         this->widget->ui->msgInput->clear();
 
-        // co jeśli nie dojdzie? :<
+        // co jeśli nie dojdzie? :<   
         toOutput(this->selfLabel, message);
+        saveMessage("self", message);
     }
 }
 
@@ -220,6 +239,7 @@ void ChatWindow::getMessage()
         decryptedMessage = decriptior(message);
 
         toOutput(this->recipientLabel, decryptedMessage);
+        saveMessage(recipient.toString(), decryptedMessage);
     }
     else
     {
@@ -244,6 +264,7 @@ void ChatWindow::setRecipientLabel(QString label)
 Chat::Chat(MainWindow* mw)
 {
     this->gui = mw;
+    this->db = new Database("../db.sqlite");
 
     listener.listen(QHostAddress::Any, 8888);
 
@@ -251,6 +272,8 @@ Chat::Chat(MainWindow* mw)
             this, SLOT(incomingConnection())); // obsługa przychodzacego requesta
     connect(this->gui->ui->connectButton, SIGNAL(clicked()),
             this, SLOT(checkAddress())); // przechwycenie adresu IP od GUI
+    connect(this->gui->ui->historyButton, SIGNAL(clicked()),
+            this->gui, SLOT(openHistory()));
 }
 
 void Chat::checkAddress()
@@ -297,4 +320,15 @@ void Chat::incomingConnection()
     // jakies okienko pyta o akceptacje
     // if ok
     addChatWindow(connection, address);
+}
+
+void Chat::toDatabase(QString from, QString to, QString message)
+{
+    QMap<QString,QString> shipment;
+    shipment.insert("FROM", from);
+    shipment.insert("TO", to);
+    shipment.insert("DATETIME", "datetime(now)");
+    shipment.insert("MESSAGE", message);
+
+    db->insertInto("CHATHISTORY", &shipment);
 }

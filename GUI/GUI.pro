@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network
+QT       += core gui network sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,11 +15,16 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     chatwidget.cpp \
-    chat.cpp
+    chat.cpp \
+    database.cpp \
+    archivewindow.cpp
 
 HEADERS  += mainwindow.h \
     chatwidget.h \
-    chat.h
+    chat.h \
+    database.h \
+    archivewindow.h
 
 FORMS    += mainwindow.ui \
-    chatwidget.ui
+    chatwidget.ui \
+    archivewindow.ui

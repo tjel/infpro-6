@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QString>
 #include "chatwidget.h"
+#include "archivewindow.h"
 
 namespace Ui
 {
@@ -19,6 +20,9 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+public slots:
+    void openHistory();
 };
 
 #endif // MAINWINDOW_H
