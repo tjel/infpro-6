@@ -11,10 +11,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QPixmap pixmap(":/avatar.png");
-    QRegion exposed;
+    QImage icon(100, 100, QImage.Format_RGB32);
+    QImageReader reader("avatar.png");
+    ui->bigavatar->setPixmap(reader);
 
-    ui->bigavatar->pixmapp.scroll(10, 10, pixmap.rect(), &exposed);//setPixmap(pix);
+    //QPixmap pixmap(":/avatar.png");
+    //QRegion exposed;
+
+    //ui->bigavatar->pixmapp.scroll(10, 10, pixmap.rect(), &exposed);//setPixmap(pix);
 
 }
 
