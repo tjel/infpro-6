@@ -17,13 +17,15 @@ SOURCES += main.cpp\
     chatwidget.cpp \
     chat.cpp \
     database.cpp \
-    archivewindow.cpp
+    archivewindow.cpp \
+    eventfilter.cpp
 
 HEADERS  += mainwindow.h \
     chatwidget.h \
     chat.h \
     database.h \
-    archivewindow.h
+    archivewindow.h \
+    eventfilter.h
 
 FORMS    += mainwindow.ui \
     chatwidget.ui \

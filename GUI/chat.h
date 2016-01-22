@@ -8,22 +8,23 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QHostAddress>
+#include "database.h"
+#include "eventfilter.h"
 #include "mainwindow.h"
 #include "chatwidget.h"
-#include "database.h"
 #include "ui_mainwindow.h"
 #include "ui_chatwidget.h"
 
 class ChatWindow : public QObject
 {
     Q_OBJECT
-    friend class ChatSync;
 
     ChatWidget* widget;
-    QHostAddress recipient;
     QTcpSocket* socket;
+    QHostAddress recipient;
     QString selfLabel;
     QString recipientLabel;
+    QString recipientAddress;
     unsigned int secretA;
     unsigned int keyA;
     unsigned int encryptionKey;
@@ -52,8 +53,8 @@ signals:
     void toDatabase(QString, QString);
 
 public:
-    ChatWindow(ChatWidget*, QHostAddress); // przy nawiazywaniu polaczenia
-    ChatWindow(ChatWidget*, QTcpSocket*); // przy akceptowaniu polaczenia
+    ChatWindow(ChatWidget*, QHostAddress, QString); // przy nawiazywaniu polaczenia
+    ChatWindow(ChatWidget*, QTcpSocket*, QHostAddress, QString); // przy akceptowaniu polaczenia
 };
 
 class Chat : public QObject
@@ -65,15 +66,16 @@ class Chat : public QObject
     Database* db;
     QMap<int, ChatWindow*> windows;
 
-    void initSignals();
-    void addChatWindow(QHostAddress); // przy nawiazywanu polaczen
-    void addChatWindow(QTcpSocket*, QHostAddress); // przy akceptowaniu polaczen
+    //void initSignals();
+    void addChatWindow(QHostAddress, QString); // przy nawiazywanu polaczen
+    void addChatWindow(QTcpSocket*, QHostAddress, QString); // przy akceptowaniu polaczen
 
 public:
     Chat(MainWindow*);
+    static QString cropAddress(QString&);
 
 public slots:
-    void incomingConnection();
+    void handleIncomingConnection();
     void checkAddress();
     void toDatabase(QString, QString, QString);
 };

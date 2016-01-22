@@ -1,6 +1,6 @@
 #include "chat.h"
 
-ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
+ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address, QString addressString)
     : keyA(0),
       secretA(0),
       encryptionKey(0)
@@ -8,8 +8,9 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
     qsrand((uint)QTime::currentTime().msec());
 
     this->widget = newWidget;
-    this->recipient = address;
     this->socket = new QTcpSocket();
+    this->recipient = address;
+    this->recipientAddress = addressString;
 
     connect(this->socket, SIGNAL(connected()),
             this, SLOT(connectionEstablished()));
@@ -23,6 +24,11 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
         connectionFailed();
     else
     {
+        KeyPressFilter* keyPressFilter = new KeyPressFilter(this);
+        this->widget->ui->msgInput->installEventFilter((keyPressFilter));
+
+        connect(keyPressFilter, SIGNAL(enterPressed()),
+                this->widget->ui->sendButton, SIGNAL(clicked()));
         connect(this->widget->ui->sendButton, SIGNAL(clicked()),
                 this, SLOT(sendMessage()));
         connect(this->socket, SIGNAL(disconnected()),
@@ -35,7 +41,7 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address)
 
 }
 
-ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
+ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket, QHostAddress address, QString addressString)
     : keyA(0),
       secretA(0),
       encryptionKey(0)
@@ -44,8 +50,14 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
 
     this->widget = newWidget;
     this->socket = socket;
-    this->recipient = this->socket->peerAddress();
+    this->recipient = address;
+    this->recipientAddress = addressString;
 
+    KeyPressFilter* keyPressFilter = new KeyPressFilter(this);
+    this->widget->ui->msgInput->installEventFilter((keyPressFilter));
+
+    connect(keyPressFilter, SIGNAL(enterPressed()),
+            this->widget->ui->sendButton, SIGNAL(clicked()));
     connect(this->socket, SIGNAL(readyRead()),
             this, SLOT(getMessage()));
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
@@ -60,12 +72,16 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket)
     keyExchange1();
     initUserLabels();
     enableInputWidgets();
+
+    toOutput("Connected to " + recipientLabel + ".");
 }
 
 void ChatWindow::enableInputWidgets()
 {
     this->widget->ui->sendButton->setEnabled(true);
-    this->widget->ui->disconnectButton->setEnabled(true);
+    this->widget->ui->sendButton->blockSignals(false);
+    this->widget->ui->connectionButton->setEnabled(true);
+    this->widget->ui->connectionButton->blockSignals(false);
 }
 
 void ChatWindow::connectionEstablished()
@@ -78,7 +94,7 @@ void ChatWindow::connectionEstablished()
 
 void ChatWindow::connectionFailed()
 {
-    QString output = "Connection failed. You may want to rethink your life and/or try again.";
+    QString output = "Connection failed.";
 
     toOutput(output);
     // Disconnect button -> Try Again button?
@@ -86,7 +102,7 @@ void ChatWindow::connectionFailed()
 
 void ChatWindow::connectionLost()
 {
-    QString output = "Connection lost. Lord knows if there are any means of solving this right now.";
+    QString output = "Connection lost.";
 
     toOutput(output);
     disableInputWidgets();
@@ -95,8 +111,13 @@ void ChatWindow::connectionLost()
 
 void ChatWindow::toOutput(QString text)
 {
+    QString time = QDateTime::currentDateTime().toString(QString("hh:mm:ss"));
+
     this->widget->ui->msgOutput->setText( QString(
                this->widget->ui->msgOutput->toPlainText()
+             + "{"
+             + time
+             + "} "
              + text
              + "\n"));
 }
@@ -109,9 +130,9 @@ void ChatWindow::toOutput(QString who, QString what)
                this->widget->ui->msgOutput->toPlainText()
              + "["
              + time
-             + ", "
+             + " | "
              + who
-             + "]: "
+             + "]:\n"
              + what
              + "\n"));
 }
@@ -123,11 +144,11 @@ void ChatWindow::saveMessage(QString sender, QString message)
     if (sender == "self")
     {
         from = "me";
-        to = recipient.toString();
+        to = recipientAddress;
     }
     else
     {
-        from = recipient.toString();
+        from = recipientAddress;
         to = "self";
     }
 
@@ -137,7 +158,7 @@ void ChatWindow::saveMessage(QString sender, QString message)
 void ChatWindow::initUserLabels()
 {
     this->selfLabel = QString("me");
-    this->recipientLabel = this->recipient.toString();
+    this->recipientLabel = this->recipientAddress;
 }
 
 /*void ChatWindow::keyExchange1()
@@ -158,12 +179,15 @@ void ChatWindow::keyExchange2(QString key)
 void ChatWindow::keyExchange1()
 {
 
-    unsigned int base = 24611, modulus = 44533; //Stale ktorych uzywamy do tworzenia kluczy. Wzialbym wieksze, ale nie mam kalkulatora ktory by liczyl eulera dla 6+ cyfrowych liczb bez zawieszania sie
-    unsigned int random =  0;
+    unsigned int base = 24611,
+                 modulus = 44533, //Stale ktorych uzywamy do tworzenia kluczy. Wzialbym wieksze, ale nie mam kalkulatora ktory by liczyl eulera dla 6+ cyfrowych liczb bez zawieszania sie
+                 random =  0;
 
-    while(random == 0)
+    while (random == 0)
     {
-        for (int i=0; i<qrand()%7; i++) //losujemy kilkukrotnie randomowa liczbe, bo qrand jest slaby i jego pierwszy wynik jest zawsze zblizony do seeda
+        for (int i=0; i<qrand()%7; i++)
+        // losujemy kilkukrotnie randomowa liczbe, bo qrand jest slaby i
+        // jego pierwszy wynik jest zawsze zblizony do seeda
         {
             random=qrand();
         }
@@ -179,12 +203,13 @@ void ChatWindow::keyExchange2(QString key)
     unsigned int modulus = 44533;
     unsigned int keyB = key.toInt();
     this->encryptionKey = ((int)pow(keyB, this->secretA))%modulus;
-    qDebug()<< this->encryptionKey;
+
+    //qDebug()<< this->encryptionKey;
 }
 
 QString ChatWindow::encriptior(QString message)
 {
-    QString messageOut="";
+    QString messageOut = "";
 
     for(int i=0; i<message.length(); i++)
     {
@@ -212,7 +237,9 @@ QString ChatWindow::decriptior(QString message)
 void ChatWindow::disableInputWidgets()
 {
     this->widget->ui->sendButton->setEnabled(false);
-    this->widget->ui->disconnectButton->setEnabled(false);
+    this->widget->ui->sendButton->blockSignals(true);
+    this->widget->ui->connectionButton->setEnabled(false);
+    this->widget->ui->connectionButton->blockSignals(true);
 }
 
 void ChatWindow::sendMessage()
@@ -243,7 +270,7 @@ void ChatWindow::getMessage()
         decryptedMessage = decriptior(message);
 
         toOutput(this->recipientLabel, decryptedMessage);
-        saveMessage(recipient.toString(), decryptedMessage);
+        saveMessage(recipientAddress, decryptedMessage);
     }
     else
     {
@@ -253,16 +280,14 @@ void ChatWindow::getMessage()
 
 void ChatWindow::setSelfLabel(QString label)
 {
-    // if not something terrible
-    this->selfLabel = label;
-    // else toOutput("Not gonna happen");
+    if (label.length())
+        this->selfLabel = label;
 }
 
 void ChatWindow::setRecipientLabel(QString label)
 {
-    // if kosher
-    this->recipientLabel = label;
-    // else toOutput("Yer mum");
+    if (label.length())
+        this->recipientLabel = label;
 }
 
 Chat::Chat(MainWindow* mw)
@@ -270,10 +295,15 @@ Chat::Chat(MainWindow* mw)
     this->gui = mw;
     this->db = new Database("../db.sqlite");
 
+    KeyPressFilter* keyPressFilter = new KeyPressFilter(this);
+    this->gui->ui->addressInput->installEventFilter(keyPressFilter);
+
     listener.listen(QHostAddress::Any, 8888);
 
+    connect(keyPressFilter, SIGNAL(enterPressed()),
+            this->gui->ui->connectButton, SIGNAL(clicked())); // totalna perwersja
     connect(&this->listener, SIGNAL(newConnection()),
-            this, SLOT(incomingConnection())); // obsługa przychodzacego requesta
+            this, SLOT(handleIncomingConnection())); // obsługa przychodzacego requesta
     connect(this->gui->ui->connectButton, SIGNAL(clicked()),
             this, SLOT(checkAddress())); // przechwycenie adresu IP od GUI
     connect(this->gui->ui->historyButton, SIGNAL(clicked()),
@@ -281,49 +311,64 @@ Chat::Chat(MainWindow* mw)
 }
 
 void Chat::checkAddress()
-{
-    QString adress = this->gui->ui->addressInput->text();
-    // if text not already in chatWindows.addresses (and preferably is a proper IP address)
-    // zaczynamy procedure laczenia...
+{ 
+    QString address = this->gui->ui->addressInput->text();
 
-    addChatWindow(QHostAddress(adress));
+    if (address.length()) // and not already in use (and preferably is a proper IP address)
+        addChatWindow(QHostAddress(address), cropAddress(address));
 }
 
-void Chat::addChatWindow(QHostAddress address)
+void Chat::addChatWindow(QHostAddress address, QString addressString)
 {
-    // ...konstruujac nowy ChatWindow, podajac id nowego taba interfejsu i adres odbiorcy
-
-    ChatWidget* newWidget = new ChatWidget();
+    ChatWidget* newWidget = new ChatWidget(this->gui->ui->tabs);
     int id = this->gui->ui->tabs->addTab(newWidget, address.toString());
+
     //name = name.simplified();
     //if(name.compare(""))
     //{
-    //    this->gui->ui->tabs->widget(this->gui->ui->tabs->count())->text="a";
+    //    this->gui->ui->tabs->widget(this->gui->ui->tabs->count())->text="a"; // tso?!
     //}
 
-    windows.insert(id, new ChatWindow(newWidget, QHostAddress(address)));
+    this->gui->ui->addressInput->clear();
+
+    windows.insert(id, new ChatWindow(newWidget, address, addressString));
     this->gui->ui->tabs->setCurrentIndex(id);
 }
 
-void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address)
+void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address, QString addressString)
 {
-    ChatWidget* newWidget = new ChatWidget();
-    int id = this->gui->ui->tabs->addTab(newWidget, address.toString());
+    ChatWidget* newWidget = new ChatWidget(this->gui->ui->tabs);
+    int id = this->gui->ui->tabs->addTab(newWidget, addressString);
 
-    windows.insert(id, new ChatWindow(newWidget, socket));
+    this->gui->ui->addressInput->clear();
+
+    windows.insert(id, new ChatWindow(newWidget, socket, address, addressString));
 }
 
-void Chat::incomingConnection()
+void Chat::handleIncomingConnection()
 {
     QTcpSocket* connection = this->listener.nextPendingConnection();
     QHostAddress address = connection->peerAddress();
+    QString addressString = address.toString();
 
     // if address already in windows.addresses -> kill 'em all?
     //   (zakonczenie polaczenia nie zamyka taba, wiec moga sie zdublowac z jakims starym)
 
     // jakies okienko pyta o akceptacje
     // if ok
-    addChatWindow(connection, address);
+    addChatWindow(connection, address, cropAddress(addressString));
+}
+
+QString Chat::cropAddress(QString& address)
+{
+    QString HEAD = "::ffff:";
+
+    if (address.startsWith(HEAD))
+    {
+       return address.split(HEAD)[1];
+    }
+
+    return address;
 }
 
 void Chat::toDatabase(QString from, QString to, QString message)

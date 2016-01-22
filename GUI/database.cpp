@@ -12,23 +12,32 @@ Database::Database(QString path)
 
     if (!existed)
     {
+        open();
+
         QMap<QString,QString> columns;
         columns.insert("From", "TEXT");
         columns.insert("DateTime", "TEXT");
         columns.insert("Message", "TEXT");
 
         createTable("CHATHISTORY", &columns);
+
+        close();
     }
 }
 
 Database::~Database()
 {
-    this->db.close();
+    this->close();
 }
 
 bool Database::open()
 {
     return this->db.open();
+}
+
+void Database::close()
+{
+    this->db.close();
 }
 
 bool Database::createTable(QString name, QMap<QString,QString>* columns)

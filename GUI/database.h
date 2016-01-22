@@ -20,6 +20,7 @@ public:
     Database(QString);
     ~Database();
     bool open();
+    void close();
     bool createTable(QString, QMap<QString, QString>*);
     bool insertInto(QString, QMap<QString, QString>*);
 };

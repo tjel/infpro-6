@@ -9,6 +9,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->centralWidget->setStyleSheet(
+                QString::fromUtf8(
+                    "QWidget#centralWidget\n"
+                    "{\n"
+                    "  background-color: rgba(225, 210, 110, 250);\n"
+                    "}\n"));
+    ui->tabs->setStyleSheet( // nie działa :[
+                QString::fromUtf8(
+                    "QWidget#tabs\n"
+                    "{\n"
+                    "  color: rgba(225, 210, 110, 150);\n"
+                    "}\n"));
 }
 
 MainWindow::~MainWindow()

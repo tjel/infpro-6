@@ -15,7 +15,7 @@ class ChatWidget : public QWidget
 public:
     Ui::ChatWidget *ui;
 
-    explicit ChatWidget(QWidget *parent = 0);
+    explicit ChatWidget(QWidget *parent=0);
     ~ChatWidget();
 };
 
