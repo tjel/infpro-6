@@ -6,30 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>506</width>
-    <height>336</height>
+    <width>520</width>
+    <height>348</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Chat history</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QListView" name="list">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>140</width>
-      <height>292</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QTextBrowser" name="browser">
     <property name="geometry">
      <rect>
-      <x>160</x>
+      <x>164</x>
       <y>20</y>
-      <width>332</width>
+      <width>342</width>
       <height>292</height>
      </rect>
     </property>
@@ -39,6 +32,16 @@
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="list">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>142</width>
+      <height>292</height>
+     </rect>
     </property>
    </widget>
   </widget>

@@ -8,8 +8,10 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QHostAddress>
+#include <QMessageBox>
 #include "database.h"
 #include "eventfilter.h"
+#include "chathistory.h"
 #include "mainwindow.h"
 #include "chatwidget.h"
 #include "ui_mainwindow.h"
@@ -48,9 +50,10 @@ private slots:
     void setSelfLabel(QString);
     void setRecipientLabel(QString);
     void saveMessage(QString, QString);
+    void disconnect();
 
 signals:
-    void toDatabase(QString, QString);
+    void toDatabase(QString, QString, QString);
 
 public:
     ChatWindow(ChatWidget*, QHostAddress, QString); // przy nawiazywaniu polaczenia
@@ -60,11 +63,13 @@ public:
 class Chat : public QObject
 {
     Q_OBJECT
+    friend class ChatHistory;
 
     MainWindow* gui;
     QTcpServer listener;
     Database* db;
     QMap<int, ChatWindow*> windows;
+    ChatHistory* history;
 
     //void initSignals();
     void addChatWindow(QHostAddress, QString); // przy nawiazywanu polaczen
@@ -72,12 +77,14 @@ class Chat : public QObject
 
 public:
     Chat(MainWindow*);
+    ~Chat();
     static QString cropAddress(QString&);
 
 public slots:
     void handleIncomingConnection();
     void checkAddress();
     void toDatabase(QString, QString, QString);
+    void openHistory();
 };
 
 #endif // CHAT_H

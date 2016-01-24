@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>693</width>
-    <height>457</height>
+    <width>700</width>
+    <height>462</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -35,7 +35,7 @@
       <x>10</x>
       <y>10</y>
       <width>540</width>
-      <height>400</height>
+      <height>414</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -54,8 +54,8 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>585</x>
-      <y>116</y>
+      <x>590</x>
+      <y>120</y>
       <width>75</width>
       <height>23</height>
      </rect>
@@ -69,7 +69,7 @@
      <rect>
       <x>560</x>
       <y>90</y>
-      <width>121</width>
+      <width>126</width>
       <height>20</height>
      </rect>
     </property>
@@ -90,7 +90,7 @@
    <widget class="QPushButton" name="historyButton">
     <property name="geometry">
      <rect>
-      <x>580</x>
+      <x>590</x>
       <y>370</y>
       <width>75</width>
       <height>23</height>

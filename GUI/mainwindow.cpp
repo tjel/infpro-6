@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
                 QString::fromUtf8(
                     "QWidget#centralWidget\n"
                     "{\n"
-                    "  background-color: rgba(225, 210, 110, 250);\n"
+                    "  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(225, 210, 110, 250), stop:1 rgba(255, 220, 70, 115));\n"
                     "}\n"));
     ui->tabs->setStyleSheet( // nie działa :[
                 QString::fromUtf8(
@@ -26,10 +26,4 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::openHistory()
-{
-    ArchiveWindow* archive = new ArchiveWindow(this);
-    archive->show();
 }

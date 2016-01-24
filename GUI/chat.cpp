@@ -25,18 +25,21 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QHostAddress address, QString addr
     else
     {
         KeyPressFilter* keyPressFilter = new KeyPressFilter(this);
-        this->widget->ui->msgInput->installEventFilter((keyPressFilter));
+        this->widget->ui->msgInput->installEventFilter(keyPressFilter);
 
         connect(keyPressFilter, SIGNAL(enterPressed()),
                 this->widget->ui->sendButton, SIGNAL(clicked()));
         connect(this->widget->ui->sendButton, SIGNAL(clicked()),
                 this, SLOT(sendMessage()));
+        connect(this->widget->ui->connectionButton, SIGNAL(clicked()),
+                this, SLOT(disconnect()));
         connect(this->socket, SIGNAL(disconnected()),
                 this, SLOT(connectionLost()));
         connect(this->socket, SIGNAL(readyRead()),
                 this, SLOT(getMessage()));
 
         initUserLabels();
+        this->widget->ui->msgInput->setFocus();
     }
 
 }
@@ -62,6 +65,8 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket, QHostAddress a
             this, SLOT(getMessage()));
     connect(this->widget->ui->sendButton, SIGNAL(clicked()),
             this, SLOT(sendMessage()));
+    connect(this->widget->ui->connectionButton, SIGNAL(clicked()),
+            this, SLOT(disconnect()));
     connect(this->socket, SIGNAL(disconnected()),
             this, SLOT(connectionLost()));
     connect(this->socket, SIGNAL(connected()),
@@ -72,6 +77,7 @@ ChatWindow::ChatWindow(ChatWidget* newWidget, QTcpSocket* socket, QHostAddress a
     keyExchange1();
     initUserLabels();
     enableInputWidgets();
+    this->widget->ui->msgInput->setFocus();
 
     toOutput("Connected to " + recipientLabel + ".");
 }
@@ -113,33 +119,31 @@ void ChatWindow::toOutput(QString text)
 {
     QString time = QDateTime::currentDateTime().toString(QString("hh:mm:ss"));
 
-    this->widget->ui->msgOutput->setText( QString(
-               this->widget->ui->msgOutput->toPlainText()
-             + "{"
-             + time
-             + "} "
-             + text
-             + "\n"));
+    this->widget->ui->msgOutput->append(
+                "{"
+              + time
+              + "} "
+              + text);
 }
 
 void ChatWindow::toOutput(QString who, QString what)
 {
     QString time = QDateTime::currentDateTime().toString(QString("hh:mm:ss"));
 
-    this->widget->ui->msgOutput->setText( QString(
-               this->widget->ui->msgOutput->toPlainText()
-             + "["
+    this->widget->ui->msgOutput->append(
+               "["
              + time
              + " | "
              + who
              + "]:\n"
-             + what
-             + "\n"));
+             + what);
 }
 
 void ChatWindow::saveMessage(QString sender, QString message)
 {
     QString from, to;
+
+    qDebug () << "Wszedłszy do sejwa..";
 
     if (sender == "self")
     {
@@ -149,10 +153,11 @@ void ChatWindow::saveMessage(QString sender, QString message)
     else
     {
         from = recipientAddress;
-        to = "self";
+        to = "me";
     }
 
-    emit toDatabase(from, message);
+    qDebug() << "emitejszyn sygnału..";
+    emit toDatabase(from, to, message);
 }
 
 void ChatWindow::initUserLabels()
@@ -270,12 +275,17 @@ void ChatWindow::getMessage()
         decryptedMessage = decriptior(message);
 
         toOutput(this->recipientLabel, decryptedMessage);
-        saveMessage(recipientAddress, decryptedMessage);
+        saveMessage("other", decryptedMessage);
     }
     else
     {
         keyExchange2(message);
     }
+}
+
+void ChatWindow::disconnect()
+{
+    toOutput("This button has not yet earn a functionality.");
 }
 
 void ChatWindow::setSelfLabel(QString label)
@@ -307,21 +317,33 @@ Chat::Chat(MainWindow* mw)
     connect(this->gui->ui->connectButton, SIGNAL(clicked()),
             this, SLOT(checkAddress())); // przechwycenie adresu IP od GUI
     connect(this->gui->ui->historyButton, SIGNAL(clicked()),
-            this->gui, SLOT(openHistory()));
+            this, SLOT(openHistory()));
+
+    this->gui->ui->addressInput->setFocus();
+
+    qDebug() << "Opening database connection: " << db->open();
+}
+
+Chat::~Chat()
+{
+    db->close();
+    delete db;
+    delete history;
 }
 
 void Chat::checkAddress()
 { 
     QString address = this->gui->ui->addressInput->text();
+    QHostAddress hostAddress(address);
 
     if (address.length()) // and not already in use (and preferably is a proper IP address)
-        addChatWindow(QHostAddress(address), cropAddress(address));
+        addChatWindow(hostAddress, cropAddress(hostAddress.toString()));
 }
 
 void Chat::addChatWindow(QHostAddress address, QString addressString)
 {
     ChatWidget* newWidget = new ChatWidget(this->gui->ui->tabs);
-    int id = this->gui->ui->tabs->addTab(newWidget, address.toString());
+    int id = this->gui->ui->tabs->addTab(newWidget, addressString);
 
     //name = name.simplified();
     //if(name.compare(""))
@@ -333,6 +355,9 @@ void Chat::addChatWindow(QHostAddress address, QString addressString)
 
     windows.insert(id, new ChatWindow(newWidget, address, addressString));
     this->gui->ui->tabs->setCurrentIndex(id);
+
+    connect(windows[id], SIGNAL(toDatabase(QString,QString,QString)),
+            this, SLOT(toDatabase(QString,QString,QString)));
 }
 
 void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address, QString addressString)
@@ -343,6 +368,10 @@ void Chat::addChatWindow(QTcpSocket* socket, QHostAddress address, QString addre
     this->gui->ui->addressInput->clear();
 
     windows.insert(id, new ChatWindow(newWidget, socket, address, addressString));
+    this->gui->ui->tabs->setCurrentIndex(id);
+
+    connect(windows[id], SIGNAL(toDatabase(QString,QString,QString)),
+            this, SLOT(toDatabase(QString,QString,QString)));
 }
 
 void Chat::handleIncomingConnection()
@@ -373,11 +402,16 @@ QString Chat::cropAddress(QString& address)
 
 void Chat::toDatabase(QString from, QString to, QString message)
 {
+    qDebug () << "Wszedłszy do slota..";
     QMap<QString,QString> shipment;
-    shipment.insert("FROM", from);
-    shipment.insert("TO", to);
-    shipment.insert("DATETIME", "datetime(now)");
-    shipment.insert("MESSAGE", message);
+    shipment.insert("Sender", from);
+    shipment.insert("Receiver", to);
+    shipment.insert("Message", message);
 
     db->insertInto("CHATHISTORY", &shipment);
+}
+
+void Chat::openHistory()
+{
+    this->history = new ChatHistory(db);
 }

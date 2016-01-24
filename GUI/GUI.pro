@@ -13,20 +13,24 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
+    mainwindow.cpp \
     chatwidget.cpp \
     chat.cpp \
     database.cpp \
     archivewindow.cpp \
-    eventfilter.cpp
+    eventfilter.cpp \
+    chathistory.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS += mainwindow.h \
     chatwidget.h \
     chat.h \
     database.h \
     archivewindow.h \
-    eventfilter.h
+    eventfilter.h \
+    chathistory.h
 
-FORMS    += mainwindow.ui \
+FORMS += mainwindow.ui \
     chatwidget.ui \
     archivewindow.ui
+
+QMAKE_LFLAGS_WINDOWS = /SUBSYSTEM:WINDOWS,5.01

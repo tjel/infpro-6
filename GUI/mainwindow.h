@@ -20,9 +20,6 @@ public:
 
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-
-public slots:
-    void openHistory();
 };
 
 #endif // MAINWINDOW_H

@@ -8,6 +8,7 @@
 #include <QSqlResult>
 #include <QDebug>
 #include <QString>
+#include <QException>
 
 class Database : public QObject
 {
@@ -23,6 +24,8 @@ public:
     void close();
     bool createTable(QString, QMap<QString, QString>*);
     bool insertInto(QString, QMap<QString, QString>*);
+    QSqlQuery selectMessages(QString,QString order="");
+    QSqlQuery select(QString);
 };
 
 #endif // DATABASE_H
