@@ -1,6 +1,20 @@
 
-Klasy **MainWindow** i **ChatWidget** udostêpniaj¹ publicznie swoje obiekty *ui* logice komunikatora.
+Ten program jest program przeznaczony do komunikacji miÄ™dzy ludzkiej przy uÅ¼yciu wspaniaÅ‚ego sprzÄ™tu jakim jest komputer. Jest on prosty w uÅ¼yciu dla osÃ³b w (PRAWIE) kaÅ¼dym wieku i stanie fizycznym (nie wliczajÄ…c osÃ³b niewidomych i Å›lepych).
 
-Ka¿dy **ChatWindow** obs³uguje komunikacjê z jednym adresem IP. Posiada wskaŸnik na wid¿et, w którym siê ona odbywa oraz adres IP odbiorcy i *QTcpSockety* do wysy³ania i odbierania wiadomoœci. Obiekt mo¿e zostaæ zainicjowany na dwa sposoby: przez u¿ytkownika nawi¹zuj¹cego po³¹czenie lub po zaakceptowaniu sygnalizowanego przez *QTcpServer* po³¹czenia przychodz¹cego.
+W programie znajdujÄ… siÄ™:
 
-Klasa **Chat** uruchamia serwer odbieraj¹cy nowe po³¹czenia. Tworzy nowe instancje *Chat Window* wraz z przypisanymi im zak³adkami interfejsu graficznego, przekazuj¹c im równie¿ socket do odczytu wiadomoœci.
+Klasy MainWindow i ChatWidget udostÄ™pniajÄ…ce publicznie swoje obiekty ui logice komunikatora.
+
+KaÅ¼dy ChatWindow obsÅ‚uguje komunikacjÄ™ z jednym adresem IP. Posiada wskaÅºnik na widÅ¼et, w ktÃ³rym siÄ™ ona odbywa oraz adres IP odbiorcy i QtcpSockety do wysyÅ‚ania i odbierania wiadomoÅ›ci. Obiekt moÅ¼e zostaÄ‡ zainicjowany na dwa sposoby: przez uÅ¼ytkownika nawiÄ…zujÄ…cego poÅ‚Ä…czenie lub po zaakceptowaniu sygnalizowanego przez QtcpServer poÅ‚Ä…czenia przychodzÄ…cego.
+
+Klasa Chat uruchamia serwer odbierajÄ…cy nowe poÅ‚Ä…czenia. Tworzy nowe instancje ChatWindow wraz z przypisanymi im zakÅ‚adkami interfejsu graficznego, przekazujÄ…c im rÃ³wnieÅ¼ socket do odczytu wiadomoÅ›ci.
+
+Wszystkie wiadomoÅ›ci dostarczane jaki i odpierane sÄ… szyfrowane skomplikowanym systemem zaimplementowanym w programie. Przechowywane sÄ… one rÃ³wnieÅ¼ w archiwum.
+
+By uruchomiÄ‡ program naleÅ¼y do folderu, w ktÃ³rym znajduje siÄ™ GUI.exe dodaÄ‡ pliki .dll dla systemu 32 bitowego:
+1. Qt5Cored.dll
+2. icudt51.dll
+3. icuin51.dll
+4. icuuc51.dll
+5. msvcp110d.dll
+6. msvcr110d.dll
