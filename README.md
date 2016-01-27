@@ -12,9 +12,4 @@ Klasa Chat uruchamia serwer odbierający nowe połączenia. Tworzy nowe instancj
 Wszystkie wiadomości dostarczane jaki i odpierane są szyfrowane skomplikowanym systemem zaimplementowanym w programie. Przechowywane są one również w archiwum.
 
 By uruchomić program należy do folderu, w którym znajduje się GUI.exe dodać pliki .dll dla systemu 32 bitowego:
-1. Qt5Cored.dll
-2. icudt51.dll
-3. icuin51.dll
-4. icuuc51.dll
-5. msvcp110d.dll
-6. msvcr110d.dll
+Qt5Cored.dll, icudt51.dll, icuin51.dll, icuuc51.dll, msvcp110d.dll, msvcr110d.dll.
